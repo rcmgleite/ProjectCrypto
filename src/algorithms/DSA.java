@@ -17,4 +17,17 @@ public class DSA {
 		//TODO
 		return "";
 	}
+	
+	/*
+	 *	TODO/FIXME - colocar em Utils 
+	 */
+	private static String getSHA256(String s) {
+		//TODO
+		return "";
+	}
+	
+	private static String getSHA1(String s) {
+		//TODO
+		return "";
+	}
 }
