@@ -10,6 +10,8 @@ import javax.swing.JPanel;
 import javax.swing.JFrame;
 import javax.swing.JButton;
 import java.awt.Rectangle;
+import java.math.BigInteger;
+import java.security.KeyPair;
 import java.awt.Dimension;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
@@ -86,16 +88,29 @@ public class FrameRSA extends JFrame {
 
 
 	private void rsa_generatePairKey() {
-	//  TODO
+		RSA rsa = RSA.getInstance();
+		rsa.generateKeyPair();
+		ta_privatekey.setText(String.format("%040x", new BigInteger(1,rsa.getPrivateKey().getEncoded())));
+		ta_publickey.setText(String.format("%040x", new BigInteger(1, rsa.getPublicKey().getEncoded())));
 	}
 	
 	private void rsa_encrypt() {
-//  TODO
+		RSA rsa = RSA.getInstance();
+		if(rsa.getPublicKey() == null) {
+			ta_cyphertext.setText("Generate keys first!");
+		} else {
+			ta_cyphertext.setText(rsa.encrypt(ta_plantext.getText()));
+		}
 	}
 
 
 	private void rsa_decrypt() {
-	//  TODO
+		RSA rsa = RSA.getInstance();
+		if(rsa.getPrivateKey() == null) {
+			ta_cyphertext.setText("Generate keys first!");
+		} else {
+			ta_plantext.setText(rsa.decrypt(ta_cyphertext.getText()));
+		}
 	}
 
 	/**

@@ -103,7 +103,9 @@ public class FrameAES extends JFrame {
 
 	
 	private void aes_encrypt() {
-//  TODO
+		//TODO
+		System.out.println("[DEBUG] plain text: " + ta_plantext.getText());
+		AES.encrypt(ta_plantext.getText().getBytes(), ta_key.getText().getBytes());
 	}
 
 
