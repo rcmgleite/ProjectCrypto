@@ -1,34 +1,22 @@
 package src.gui;
 
-import src.algorithms.*;
-
-import java.awt.BorderLayout;
-
-import javax.swing.ButtonGroup;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JFrame;
-import javax.swing.JButton;
-import java.awt.Rectangle;
-import java.awt.Dimension;
-import javax.swing.JLabel;
-import javax.swing.JTextField;
-
-import java.awt.GridBagLayout;
 import java.awt.Color;
-import javax.swing.JRadioButton;
 import java.awt.Font;
-import javax.swing.border.LineBorder;
-import javax.swing.border.MatteBorder;
-import javax.swing.border.TitledBorder;
-import javax.swing.UIManager;
-import javax.swing.JTextPane;
-import javax.swing.JEditorPane;
-import javax.swing.JScrollPane;
+import java.awt.Rectangle;
+
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
-import javax.swing.JComboBox;
-import javax.swing.DefaultComboBoxModel;
+import javax.swing.border.LineBorder;
+import javax.swing.border.TitledBorder;
+
+import src.algorithms.AES;
+import src.algorithms.Utils;
 
 public class FrameAES extends JFrame {
 	
@@ -96,25 +84,51 @@ public class FrameAES extends JFrame {
 	 *	IV is used not by the AES but by one of the algorithm modes: EBC CBC CTR 
 	 */
 	private void aes_generateIV() {
-		
-	//  TODO
+		byte[] iv = AES.generateIv();
+		ta_iv.setText(Utils.BinaryToHex(iv));
 	}
 
 
 	private void aes_generateKey() {
-	//  TODO
+		byte[] key = AES.generateKey();
+		ta_key.setText(Utils.BinaryToHex(key));
 	}
 
-	
+	/*
+	 * 	Default mode: ECB
+	 */
 	private void aes_encrypt() {
-		//TODO
-		System.out.println("[DEBUG] plain text: " + ta_plantext.getText());
-		AES.encrypt(ta_plantext.getText().getBytes(), ta_key.getText().getBytes());
+		AES.Mode mode;
+		switch(cbox_mode.getSelectedIndex()) {
+		case 0:
+			mode = AES.Mode.ECB;
+			break;
+		case 1:
+			mode = AES.Mode.CBC;
+			break;
+		case 2:
+			mode = AES.Mode.CTR;
+			break;
+			
+		default:
+			System.out.println("[ERROR] Cipher mode doesn't exist");
+			ta_plantext.setText("[ERROR] Cipher mode doesn't exist");
+			return;
+		}
+		byte[] encrypted = AES.encrypt(ta_plantext.getText().getBytes(), Utils.hexToBinary(ta_key.getText()), mode);
+		ta_cyphertext.setText(Utils.binToBase64(encrypted));
 	}
 
-
+	/*
+	 *	Default mode: ECB 
+	 */
 	private void aes_decrypt() {
-	//  TODO
+		byte[] decrypted = AES.decrypt(Utils.base64ToBin(ta_cyphertext.getText()), Utils.hexToBinary(ta_key.getText()));
+		try {
+			ta_plantext.setText(Utils.binToString(decrypted));
+		} catch (Exception e) {
+			ta_plantext.setText(e.getMessage());
+		}
 	}
 
 	

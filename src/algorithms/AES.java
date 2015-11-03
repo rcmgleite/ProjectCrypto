@@ -1,10 +1,20 @@
 package src.algorithms;
 
-public class AES {
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 
+import javax.crypto.KeyGenerator;
+
+public class AES {
+	
 	/*
-	 *	Private parameters 
+	 *	Cipher mode 
 	 */
+	public enum Mode {
+		ECB,
+		CBC,
+		CTR
+	}
 	
 	/*
 	 *	Number of columns(32-bit words) comprising the State. 4 is used for the FIPS 197 standard 
@@ -27,22 +37,68 @@ public class AES {
 	private static byte[][] w;
 	
 	/*
-	 *	Public interface 
+	 *	generate iv 
 	 */
-	public static byte[] encrypt(byte[] input, byte[] key) {
+	public static byte[] generateIv() {
+        SecureRandom random = new SecureRandom();
+        byte iv[] = new byte[16];//generate random 16 byte IV AES is always 16bytes
+        random.nextBytes(iv);
+        return iv;
+	}
+	
+	public static byte[] generateKey() {
+		try {
+	        KeyGenerator keygen = KeyGenerator.getInstance("AES");
+	        keygen.init(128);  // To use 256 bit keys, you need the "unlimited strength" encryption policy files from Sun.
+	        return keygen.generateKey().getEncoded();
+        } catch(NoSuchAlgorithmException e) {
+        	System.out.println(e.getMessage());
+        	return null;
+        }
+	}
+	
+	/*
+	 *	encrypt method - currently using ONLY ECB mode by default
+	 */
+	public static byte[] encrypt(byte[] input, byte[] key, Mode mode) {
+		
 		nk = key.length/4;
 		nr = nk + 6;
 		
+		// padding
+		int paddingLength = 16 - (input.length % 16);
+		byte[] padding = new byte[paddingLength];
+		padding[0] = (byte) 0x80;
+		
+		for (int i = 0; i < paddingLength; i++) {
+			padding[i] = 0;
+		}
+		
 		// Key expansion step
 		w = keyExpansion(key);
+		int count = 0;
+		int i;
+		byte[] cipheredText = new byte[input.length + paddingLength];
+		byte[] block = new byte[16];
+		for (i = 0; i < input.length + paddingLength; i++) {
+			if (i > 0 && i % 16 == 0) {
+				block = encryptBlock(block);
+				System.arraycopy(block, 0, cipheredText, i - 16, block.length);
+			}
+			if (i < input.length)
+				block[i % 16] = input[i];
+			else{														
+				block[i % 16] = padding[count % 16];
+				count++;
+			}
+		}
+		if(block.length == 16){
+			block = encryptBlock(block);
+			System.arraycopy(block, 0, cipheredText, i - 16, block.length);
+		}
 		
-		return new byte[10];
+		return cipheredText;
 	}
-	
-	
-	/*
-	 * 	Private methods
-	 */
 	
 	/*
 	 *	Source: figure 5 FIPS 197
@@ -73,6 +129,59 @@ public class AES {
 		byte[] toReturn = bidimensional2unidimensional(state);
 		
 		return toReturn;
+	}
+	
+	/*
+	 *	decrypt 
+	 */
+	public static byte[] decrypt(byte[] input, byte[] key) {
+		byte[] plainText = new byte[input.length];
+		byte[] block = new byte[16];
+		
+		nk = key.length/4;
+		nr = nk + 6;
+		w = keyExpansion(key);
+
+
+		int i;
+		for (i = 0; i < input.length; i++) {
+			if (i > 0 && i % 16 == 0) {
+				block = decryptBlock(block);
+				System.arraycopy(block, 0, plainText, i - 16, block.length);
+			}
+			if (i < input.length)
+				block[i % 16] = input[i];
+		}
+		block = decryptBlock(block);
+		System.arraycopy(block, 0, plainText, i - 16, block.length);
+
+		return plainText;
+	}
+	
+	/*
+	 *	Source: Figure 12 - FIPS 197 
+	 */
+	private static byte[] decryptBlock(byte[] input) {
+		byte[] plainBlock = new byte[input.length];
+
+		byte[][] state = new byte[4][nb];
+
+		state = unidimensional2bidimensional(input);
+
+		state = addRoundKey(state, w, nr);
+		for (int round = nr-1; round >=1; round--) {
+			state = invSubBytes(state);
+			state = invShiftRows(state);
+			state = addRoundKey(state, w, round);
+			state = invMixColumns(state);
+			
+		}
+		state = invSubBytes(state);
+		state = invShiftRows(state);
+		state = addRoundKey(state, w, 0);
+
+		plainBlock = bidimensional2unidimensional(state);
+		return plainBlock;
 	}
 	
 	/*
@@ -205,6 +314,23 @@ public class AES {
 	}
 	
 	/*
+	 *	Source: page 23 FIPS 197 
+	 */
+	private static byte[][] invMixColumns(byte[][] s){
+		 int[] sp = new int[4];
+	      byte b02 = (byte)0x0e, b03 = (byte)0x0b, b04 = (byte)0x0d, b05 = (byte)0x09;
+	      for (int c = 0; c < 4; c++) {
+	         sp[0] = finiteFieldMult(b02, s[0][c]) ^ finiteFieldMult(b03, s[1][c]) ^ finiteFieldMult(b04,s[2][c])  ^ finiteFieldMult(b05,s[3][c]);
+	         sp[1] = finiteFieldMult(b05, s[0][c]) ^ finiteFieldMult(b02, s[1][c]) ^ finiteFieldMult(b03,s[2][c])  ^ finiteFieldMult(b04,s[3][c]);
+	         sp[2] = finiteFieldMult(b04, s[0][c]) ^ finiteFieldMult(b05, s[1][c]) ^ finiteFieldMult(b02,s[2][c])  ^ finiteFieldMult(b03,s[3][c]);
+	         sp[3] = finiteFieldMult(b03, s[0][c]) ^ finiteFieldMult(b04, s[1][c]) ^ finiteFieldMult(b05,s[2][c])  ^ finiteFieldMult(b02,s[3][c]);
+	         for (int i = 0; i < 4; i++) s[i][c] = (byte)(sp[i]);
+	      }
+	      
+	      return s;
+	}
+	
+	/*
 	 *	 Source: figure 8 FIPS 197
 	 */
 	private static byte[][] shiftRows(byte[][] state) {
@@ -218,18 +344,35 @@ public class AES {
 	}
 	
 	/*
-	 *	// TODO os próximos 2 métodos só são usados ns cifra inversa... impl ficará para depois
+	 *	Inverse of shiftRows()
 	 */
-	private static void invShiftRows() {
-		//TODO
+	private static byte[][] invShiftRows(byte[][] state) {
+	byte[] t = new byte[4]; 
+	for (int r = 1; r < 4; r++) {
+		for (int c = 0; c < nb; c++) { 
+			t[(c + r)%nb] = state[r][c];
+		}
+		for (int c = 0; c < nb; c++) { 
+			state[r][c] = t[c];
+		}
 	}
-	
-	private static void invSubBytes() {
-		//TODO
+	return state;
 	}
 	
 	/*
-	 * private helpers
+	 *	Inverse of subBytes() 
+	 */
+	private static byte[][] invSubBytes(byte[][] state) {
+		for (int row = 0; row < 4; row++){ 
+			for (int col = 0; col < nb; col++){
+				state[row][col] = (byte)(inv_sbox[(state[row][col] & 0x000000ff)]&0xff);
+			}
+		}
+		return state;
+	}
+	
+	/*
+	 *	helpers
 	 */
 	private static byte[] xor(byte[] in1, byte[] in2) {
 		byte[] toReturn = new byte[in1.length];
@@ -282,11 +425,6 @@ public class AES {
 		}
 		return toReturn;
 	}
-
-	
-	/*
-	 *	Private contants
-	 */
 	
 	/*
 	 *	s-box is a substitution table used on subBytes() method 
