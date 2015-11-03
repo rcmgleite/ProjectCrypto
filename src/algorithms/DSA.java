@@ -14,39 +14,32 @@ import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
-import javax.xml.bind.DatatypeConverter;
-
-import com.sun.org.apache.xml.internal.security.utils.Base64;
-
 public class DSA {
 
 	/*
 	 * Create a signature based on a msg, a private key and a hash algorithm
 	 */
-	public static String sign(String msg, String rKey, String hashAlgorithm) {
+	public static byte[] sign(String msg, String rKey, String hashAlgorithm) {
 		try {
-			// FIXME - rKey and return string has to be in HEX.. they are on
-			// base64 for now....
 			PrivateKey privateKey = privateKeyFromHex(rKey);
 			String parsedAlgorithm = getAlgorithm(hashAlgorithm);
 			Signature dsa = Signature.getInstance(parsedAlgorithm);
 			dsa.initSign(privateKey);
 
 			dsa.update(msg.getBytes());
-			return new String(Base64.encode(dsa.sign()).getBytes());
+			return dsa.sign();
 		} catch (Exception e) {
 			e.printStackTrace();
+			return null;
 		}
-		return "";
 	}
 
 	/*
 	 * Verify if signature is valid using a public key
 	 */
 	public static String verify(String sigData, String signature, String uKey, String hashAlgorithm) {
-
 		PublicKey publicKey = publicKeyFromHex(uKey);
-		byte[] data = DatatypeConverter.parseBase64Binary(new String(signature.getBytes()));
+		byte[] data = Utils.hexToBinary(signature);
 
 		try {
 			String parsedAlgorithm = getAlgorithm(hashAlgorithm);
@@ -56,15 +49,14 @@ public class DSA {
 			return sig.verify(data) == true ? "SUCCESS - Signature is Valid!" : "FAILURE - Signature is not valid";
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
+			return e.getMessage();
 		}
-
-		return "";
 	}
 
 	public static PublicKey publicKeyFromHex(String hex) {
 		try {
 
-			byte[] data = Utils.base64ToBin(hex);
+			byte[] data = Utils.hexToBinary(hex);
 			KeySpec publicKeySpec = new X509EncodedKeySpec(data);
 			KeyFactory keyfactory = KeyFactory.getInstance("DSA");
 			return keyfactory.generatePublic(publicKeySpec);
@@ -76,34 +68,33 @@ public class DSA {
 
 	public static PrivateKey privateKeyFromHex(String hex) {
 		try {
-			byte[] data = Utils.base64ToBin(hex);
+			byte[] data = Utils.hexToBinary(hex);
 			KeySpec privateKeySpec = new PKCS8EncodedKeySpec(data);
 			KeyFactory keyfactory = KeyFactory.getInstance("DSA");
 			return keyfactory.generatePrivate(privateKeySpec);
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+			System.out.println("privateKeyFromHex: " + e.getMessage());
 			return null;
 		}
 	}
 
-	public static String sha1(String msg) {
+	public static byte[] sha1(String msg) {
 		return sha(msg, "SHA-1");
 	}
 
-	public static String sha256(String msg) {
+	public static byte[] sha256(String msg) {
 		return sha(msg, "SHA-256");
 	}
 
-	private static String sha(String msg, String algorithm) {
+	private static byte[] sha(String msg, String algorithm) {
 		try {
 			MessageDigest md = MessageDigest.getInstance(algorithm);
 			md.update(msg.getBytes());
-			byte[] digested = md.digest();
-			return new String(Base64.encode(digested).getBytes());
+			return md.digest();
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
+			return null;
 		}
-		return "";
 	}
 
 	/*
@@ -116,6 +107,7 @@ public class DSA {
 	/*
 	 * Method created to generate valid dsa keys for tests..
 	 */
+	@SuppressWarnings(value = "all")
 	private static void generateKeys() {
 		try {
 			KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("DSA");
@@ -126,12 +118,12 @@ public class DSA {
 
 			FileOutputStream keyfos = new FileOutputStream("generated_DES_rk");
 			System.out.println(privateKey.getFormat());
-			keyfos.write(Base64.encode(privateKey.getEncoded()).getBytes());
+			keyfos.write(Utils.BinaryToHex(privateKey.getEncoded()).getBytes());
 			keyfos.close();
 
 			FileOutputStream keyfos2 = new FileOutputStream("generated_DES_uk");
 			System.out.println(publicKey.getFormat());
-			keyfos2.write(Base64.encode(publicKey.getEncoded()).getBytes());
+			keyfos2.write(Utils.BinaryToHex(publicKey.getEncoded()).getBytes());
 			keyfos2.close();
 		} catch (Exception e) {
 			System.out.println(e.getMessage());

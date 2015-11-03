@@ -15,6 +15,7 @@ import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 
 import src.algorithms.DSA;
+import src.algorithms.Utils;
 
 public class FrameDSA extends JFrame {
 	
@@ -28,6 +29,7 @@ public class FrameDSA extends JFrame {
 	private JLabel jLabel_hash;
 	private JLabel jLabel_signature;
 	private JLabel jLabel_mode;
+	private JLabel jLabel_result_message;
 	
 	private JPanel jPanel_Input = null;
 	private JTextArea ta_message;
@@ -35,6 +37,8 @@ public class FrameDSA extends JFrame {
 	private JTextArea ta_publickey;
 	private JTextArea ta_hash;
 	private JTextArea ta_signature;
+	private JTextArea ta_result;
+	@SuppressWarnings(value="all")
 	private JComboBox cbox_mode;
 
 	/**
@@ -51,7 +55,7 @@ public class FrameDSA extends JFrame {
 	 * @return void
 	 */
 	private void initialize() {
-		this.setSize(620, 500);
+		this.setSize(620, 600);
 		this.setContentPane(getJContentPane());
 		this.setTitle("DSA Signature");
 	}
@@ -68,6 +72,7 @@ public class FrameDSA extends JFrame {
 			
 			jContentPane.add(getBt_sign(), null);
 			jContentPane.add(getBt_decrypt(), null);
+			jContentPane.add(getCbox_mode());
 			jContentPane.add(getJPanel_Input(), null);
 
 			jLabel_mode = new JLabel();
@@ -75,7 +80,6 @@ public class FrameDSA extends JFrame {
 			jContentPane.add(jLabel_mode);
 			jLabel_mode.setFont(new Font("Tahoma", Font.BOLD, 14));
 			jLabel_mode.setText("Hash:");
-			jContentPane.add(getCbox_mode());
 						
 		}
 		return jContentPane;
@@ -84,16 +88,16 @@ public class FrameDSA extends JFrame {
 	private void dsa_sign() {
 		// hash
 		ta_hash.setText(cbox_mode.getSelectedItem().toString().equals("SHA-1") 
-				? DSA.sha1(ta_message.getText()) : DSA.sha256(ta_message.getText()));
+				? Utils.BinaryToHex(DSA.sha1(ta_message.getText())) : Utils.BinaryToHex(DSA.sha256(ta_message.getText())));
 		
 		// sign
-		String signature = DSA.sign(ta_message.getText(), ta_privatekey.getText(), cbox_mode.getSelectedItem().toString());
-		ta_signature.setText(signature);
+		byte[] signature = DSA.sign(ta_message.getText(), ta_privatekey.getText(), cbox_mode.getSelectedItem().toString());
+		ta_signature.setText(Utils.BinaryToHex(signature));
 	}
 
 
 	private void dsa_verify() {
-		ta_message.setText(DSA.verify(ta_message.getText(), ta_signature.getText(), ta_publickey.getText(), 
+		ta_result.setText(DSA.verify(ta_message.getText(), ta_signature.getText(), ta_publickey.getText(), 
 				cbox_mode.getSelectedItem().toString()));
 	}
 
@@ -150,7 +154,7 @@ public class FrameDSA extends JFrame {
 			jPanel_Input.setBorder(new TitledBorder(new LineBorder(new Color(171, 173, 179)), "DSA Parametes", TitledBorder.CENTER, TitledBorder.TOP, null, new Color(0, 0, 0)));
 			jPanel_Input.setToolTipText("");
 			jPanel_Input.setLayout(null);
-			jPanel_Input.setBounds(new Rectangle(12, 25, 578, 354));
+			jPanel_Input.setBounds(new Rectangle(12, 25, 578, 480));
 
 			jLabel_message = new JLabel();
 			jLabel_message.setFont(new Font("Tahoma", Font.BOLD, 14));
@@ -182,12 +186,19 @@ public class FrameDSA extends JFrame {
 			jPanel_Input.add(jLabel_signature);
 			jLabel_signature.setText("Signature:");
 			
+			jLabel_result_message = new JLabel();
+			jLabel_result_message.setFont(new Font("Tahoma", Font.BOLD, 14));
+			jLabel_result_message.setBounds(12, 432, 66, 28);
+			jPanel_Input.add(jLabel_result_message);
+			jLabel_result_message.setText("Result:");
+			
 			jPanel_Input.add(getTa_message());
 			jPanel_Input.add(getTa_privatekey());
 			jPanel_Input.add(getTa_publickey());
 			jPanel_Input.add(getTa_hash());
 			jPanel_Input.add(getTa_signature());
 			jPanel_Input.add(getTa_publickey());
+			jPanel_Input.add(getTa_result());
 		}
 		return jPanel_Input;
 	}
@@ -241,7 +252,18 @@ public class FrameDSA extends JFrame {
 		}
 		return ta_signature;
 	}
-
+	
+	private JTextArea getTa_result() {
+		if (ta_result == null) {
+			ta_result = new JTextArea();
+			ta_result.setLineWrap(true);
+			ta_result.setFont(new Font("Tahoma", Font.PLAIN, 12));
+			ta_result.setBounds(116, 432, 450, 38);
+		}
+		return ta_result;
+	}
+		
+	@SuppressWarnings(value="all")
 	private JComboBox getCbox_mode() {
 		if (cbox_mode == null) {
 			cbox_mode = new JComboBox();

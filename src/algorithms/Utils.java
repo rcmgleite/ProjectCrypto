@@ -1,7 +1,5 @@
 package src.algorithms;
 
-import java.math.BigInteger;
-
 import javax.xml.bind.DatatypeConverter;
 
 import com.sun.org.apache.xml.internal.security.utils.Base64;
@@ -36,7 +34,7 @@ public class Utils {
 	 *	Convert bin byte[] to hex String 
 	 */
 	public static String BinaryToHex(byte[] bin) {
-		return String.format("%040x", new BigInteger(1, bin));
+		return DatatypeConverter.printHexBinary(bin);
 	}
 	
 	/*
