@@ -96,12 +96,19 @@ public class FrameDSA extends JFrame {
 	}
 	
 	private void dsa_sign() {
-//  TODO
+		// hash
+		ta_hash.setText(cbox_mode.getSelectedItem().toString().equals("SHA-1") 
+				? DSA.sha1(ta_message.getText()) : DSA.sha256(ta_message.getText()));
+		
+		// sign
+		String signature = DSA.sign(ta_message.getText(), ta_privatekey.getText(), cbox_mode.getSelectedItem().toString());
+		ta_signature.setText(signature);
 	}
 
 
 	private void dsa_verify() {
-	//  TODO
+		ta_message.setText(DSA.verify(ta_message.getText(), ta_signature.getText(), ta_publickey.getText(), 
+				cbox_mode.getSelectedItem().toString()));
 	}
 
 	
