@@ -22,13 +22,19 @@ public class AES {
 	private static int nr;
 	
 	/*
+	 *	Key Schedule 
+	 */
+	private static byte[][] w;
+	
+	/*
 	 *	Public interface 
 	 */
 	public static byte[] encrypt(byte[] input, byte[] key) {
 		nk = key.length/4;
 		nr = nk + 6;
 		
-		//TODO
+		// Key expansion step
+		w = keyExpansion(key);
 		
 		return new byte[10];
 	}
@@ -37,6 +43,37 @@ public class AES {
 	/*
 	 * 	Private methods
 	 */
+	
+	/*
+	 *	Source: figure 5 FIPS 197
+	 *		The byte[]w contains the key schedule
+	 */
+	private static byte[] encryptBlock(byte[] block) {
+		byte[][] state = new byte[4][nb];
+		
+		// copy in to state
+		state = unidimensional2bidimensional(block);
+		
+		state = addRoundKey(state, w, 0);
+		
+		// first rounds include mixColumns() step
+		for(int r = 1; r < nr; r++) {
+			state = subBytes(state);
+			state = shiftRows(state);
+			state = mixCloumns(state);
+			state = addRoundKey(state, w, r);
+		}
+		
+		// final round doesn't include mixColumns() step
+		state = subBytes(state);
+		state = shiftRows(state);
+		state = addRoundKey(state, w, nr);
+		
+		//copy state to toReturn
+		byte[] toReturn = bidimensional2unidimensional(state);
+		
+		return toReturn;
+	}
 	
 	/*
 	 *	performs a cyclic permutation
@@ -150,17 +187,34 @@ public class AES {
 	}
 	
 	/*
-	 * 	
+	 *	Source: page 18 FIPS 197	
 	 */
-	private static void mixCloumns() {
-		//TODO
+	private static byte[][] mixCloumns(byte[][] s) {
+		int[] sp = new int[4];
+		for (int c = 0; c < 4; c++) {
+			sp[0] = finiteFieldMult((byte) 0x02, s[0][c]) ^ finiteFieldMult((byte) 0x03, s[1][c]) ^ s[2][c]  ^ s[3][c];
+			sp[1] = s[0][c]  ^ finiteFieldMult((byte) 0x02, s[1][c]) ^ finiteFieldMult((byte) 0x03, s[2][c]) ^ s[3][c];
+			sp[2] = s[0][c]  ^ s[1][c]  ^ finiteFieldMult((byte) 0x02, s[2][c]) ^ finiteFieldMult((byte) 0x03, s[3][c]);
+			sp[3] = finiteFieldMult((byte) 0x03, s[0][c]) ^ s[1][c]  ^ s[2][c]  ^ finiteFieldMult((byte) 0x02, s[3][c]);
+			for (int i = 0; i < 4; i++) { 
+				s[i][c] = (byte)(sp[i]);
+			}
+		}
+		  
+		return s;
 	}
 	
 	/*
-	 *	 
+	 *	 Source: figure 8 FIPS 197
 	 */
-	private static void shiftRows() {
-		//TODO
+	private static byte[][] shiftRows(byte[][] state) {
+		byte[][] toReturn = new byte[4][nb];
+		for(int r = 0; r < 4; r++) {
+			for(int c = 0; c < nb; c++) {
+				toReturn[r][c] = state[r][(c + shift(r, nb)) % nb];
+			}
+		}
+		return toReturn;
 	}
 	
 	/*
@@ -181,6 +235,50 @@ public class AES {
 		byte[] toReturn = new byte[in1.length];
 		for(int i = 0; i < in1.length; i++){
 			toReturn[i] = (byte) (in1[i] ^ in2[i]);
+		}
+		return toReturn;
+	}
+	
+	/*
+	 *	Source: http://www.cs.utsa.edu/~wagner/laws/FFM.html 
+	 */
+	private static byte finiteFieldMult(byte a, byte b) {
+		byte aa = a, bb = b, r = 0, t;
+		while (aa != 0) {
+			if ((aa & 1) != 0)
+				r = (byte) (r ^ bb);
+			t = (byte) (bb & 0x80);
+			bb = (byte) (bb << 1);
+			if (t != 0)
+				bb = (byte) (bb ^ 0x1b);
+			aa = (byte) ((aa & 0xff) >> 1);
+		}
+		return r;
+	}
+	
+	private static int shift(int a, int b) {
+		// Não faz sentido... mas é o que está no desenho do FIPS 197
+		return a;
+	}
+	
+	/*
+	 *	Convert byte[][] to byte[] 
+	 */
+	private static byte[] bidimensional2unidimensional(byte[][] src) {
+		byte[] toReturn = new byte[4 * nb];
+		for (int i = 0; i < toReturn.length; i++) {
+			toReturn[i%4*4+i/4] = src[i / 4][i%4];
+		}
+		return toReturn;
+	}
+	
+	/*
+	 *	Convert byte[] to byte[][]
+	 */
+	private static byte[][] unidimensional2bidimensional(byte[] src) {
+		byte[][] toReturn = new byte[4][nb];
+		for (int i = 0; i < src.length; i++) {
+			toReturn[i / 4][i % 4] = src[i%4*4+i/4];
 		}
 		return toReturn;
 	}

@@ -92,7 +92,11 @@ public class FrameAES extends JFrame {
 		return jContentPane;
 	}
 	
+	/*
+	 *	IV is used not by the AES but by one of the algorithm modes: EBC CBC CTR 
+	 */
 	private void aes_generateIV() {
+		
 	//  TODO
 	}
 
