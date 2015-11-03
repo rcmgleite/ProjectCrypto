@@ -155,7 +155,23 @@ public class AES {
 		block = decryptBlock(block);
 		System.arraycopy(block, 0, plainText, i - 16, block.length);
 
+		plainText = deletePadding(plainText);
+		
 		return plainText;
+	}
+	
+	private static byte[] deletePadding(byte[] input) {
+		int count = 0;
+
+		int i = input.length - 1;
+		while (input[i] == 0) {
+			count++;
+			i--;
+		}
+
+		byte[] toReturn = new byte[input.length - count];
+		System.arraycopy(input, 0, toReturn, 0, toReturn.length);
+		return toReturn;
 	}
 	
 	/*

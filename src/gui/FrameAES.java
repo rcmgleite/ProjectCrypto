@@ -125,7 +125,7 @@ public class FrameAES extends JFrame {
 	private void aes_decrypt() {
 		byte[] decrypted = AES.decrypt(Utils.base64ToBin(ta_cyphertext.getText()), Utils.hexToBinary(ta_key.getText()));
 		try {
-			ta_plantext.setText(Utils.binToString(decrypted));
+			ta_plantext.setText("Decrypted data: " + Utils.binToString(decrypted));
 		} catch (Exception e) {
 			ta_plantext.setText(e.getMessage());
 		}
