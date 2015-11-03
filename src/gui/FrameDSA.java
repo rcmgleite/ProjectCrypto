@@ -1,34 +1,20 @@
 package src.gui;
 
-import src.algorithms.*;
-
-import java.awt.BorderLayout;
-
-import javax.swing.ButtonGroup;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JFrame;
-import javax.swing.JButton;
-import java.awt.Rectangle;
-import java.awt.Dimension;
-import javax.swing.JLabel;
-import javax.swing.JTextField;
-
-import java.awt.GridBagLayout;
 import java.awt.Color;
-import javax.swing.JRadioButton;
 import java.awt.Font;
-import javax.swing.border.LineBorder;
-import javax.swing.border.MatteBorder;
-import javax.swing.border.TitledBorder;
-import javax.swing.UIManager;
-import javax.swing.JTextPane;
-import javax.swing.JEditorPane;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.SwingConstants;
-import javax.swing.JComboBox;
+import java.awt.Rectangle;
+
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import javax.swing.border.LineBorder;
+import javax.swing.border.TitledBorder;
+
+import src.algorithms.DSA;
 
 public class FrameDSA extends JFrame {
 	

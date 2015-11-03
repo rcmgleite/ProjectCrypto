@@ -64,7 +64,7 @@ public class DSA {
 	public static PublicKey publicKeyFromHex(String hex) {
 		try {
 
-			byte[] data = base64ToBin(hex);
+			byte[] data = Utils.base64ToBin(hex);
 			KeySpec publicKeySpec = new X509EncodedKeySpec(data);
 			KeyFactory keyfactory = KeyFactory.getInstance("DSA");
 			return keyfactory.generatePublic(publicKeySpec);
@@ -76,7 +76,7 @@ public class DSA {
 
 	public static PrivateKey privateKeyFromHex(String hex) {
 		try {
-			byte[] data = base64ToBin(hex);
+			byte[] data = Utils.base64ToBin(hex);
 			KeySpec privateKeySpec = new PKCS8EncodedKeySpec(data);
 			KeyFactory keyfactory = KeyFactory.getInstance("DSA");
 			return keyfactory.generatePrivate(privateKeySpec);
@@ -84,13 +84,6 @@ public class DSA {
 			System.out.println(e.getMessage());
 			return null;
 		}
-	}
-
-	private static byte[] base64ToBin(String s) {
-		if (s == null || s.trim().length() == 0) {
-			return null;
-		}
-		return DatatypeConverter.parseBase64Binary(new String(s.getBytes()));
 	}
 
 	public static String sha1(String msg) {

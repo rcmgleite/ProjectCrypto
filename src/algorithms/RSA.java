@@ -1,6 +1,5 @@
 package src.algorithms;
 
-import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -15,9 +14,8 @@ import javax.crypto.Cipher;
 public class RSA {
 	private PublicKey uk;
 	private PrivateKey rk;
-	private byte[] cipheredMsg;
-	private byte[] plainMsg;
 	private static RSA instance = null;
+	private static final int KEY_SIZE = 1024;
 	
 	/*
 	 *	Enum from cipher mode - its just a wrapper for Cipher.ENCRYPT_MODE and Cipher_DECRYPT_MODE 
@@ -42,10 +40,8 @@ public class RSA {
 	 */
 	public static RSA getInstance() {
 		if (instance == null) {
-			System.out.println("Creating new instance");
 			instance = new RSA();
 		}
-		System.out.println("Using existing instance");
 		return instance;
 	}
 	
@@ -58,14 +54,6 @@ public class RSA {
 	
 	public PublicKey getPublicKey() {
 		return this.uk;
-	}
-	
-	public byte[] getPlainMsg() {
-		return this.plainMsg;
-	}
-	
-	public byte[] getCipheredMsg() {
-		return this.cipheredMsg;
 	}
 	
 	/*
@@ -82,7 +70,7 @@ public class RSA {
 	public void generateKeyPair() {
 		try{
 			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-			keyGen.initialize(512);
+			keyGen.initialize(KEY_SIZE);
 			KeyPair kp = keyGen.generateKeyPair();
 			rk = kp.getPrivate();
 			uk = kp.getPublic();
@@ -111,13 +99,23 @@ public class RSA {
 	private String cipherExecute(String text, Mode mode) {
 		try{
 			Cipher cipher = Cipher.getInstance("RSA");
-			System.out.println(mode.getValue());
-			cipher.init(mode.getValue(), mode == Mode.ENCRYPT ? this.uk : this.rk);
-			this.cipheredMsg = cipher.doFinal(text.getBytes());
-			return String.format("%040x", new BigInteger(1, this.cipheredMsg));
+			byte[] ciphered;
+			String toReturn;
+			
+			if(mode == Mode.ENCRYPT) {
+				cipher.init(Cipher.ENCRYPT_MODE, this.uk);
+				ciphered = cipher.doFinal(text.getBytes());
+				toReturn = Utils.binToBase64(ciphered);
+			} else {
+				cipher.init(Cipher.DECRYPT_MODE, this.rk);
+				ciphered = cipher.doFinal(Utils.base64ToBin(text));
+				toReturn = "Decoded cipher: '" + Utils.binToString(ciphered) + "'";
+			}
+			
+			return toReturn;
 		} catch(Exception e) {
 			System.out.println(e.getMessage());
+			return "[ERROR] " + e.getMessage();
 		} 
-		return "";
 	}
 }
