@@ -16,6 +16,8 @@ public class AES {
 		CTR
 	}
 	
+	private static final int KEY_SIZE = 128;
+	
 	/*
 	 *	Number of columns(32-bit words) comprising the State. 4 is used for the FIPS 197 standard 
 	 */
@@ -49,7 +51,7 @@ public class AES {
 	public static byte[] generateKey() {
 		try {
 	        KeyGenerator keygen = KeyGenerator.getInstance("AES");
-	        keygen.init(128);  // To use 256 bit keys, you need the "unlimited strength" encryption policy files from Sun.
+	        keygen.init(KEY_SIZE);  // To use 256 bit keys, you need the "unlimited strength" encryption policy files from Sun.
 	        return keygen.generateKey().getEncoded();
         } catch(NoSuchAlgorithmException e) {
         	System.out.println(e.getMessage());
@@ -61,7 +63,6 @@ public class AES {
 	 *	encrypt method - currently using ONLY ECB mode by default
 	 */
 	public static byte[] encrypt(byte[] input, byte[] key, Mode mode) {
-		
 		nk = key.length/4;
 		nr = nk + 6;
 		
@@ -160,6 +161,9 @@ public class AES {
 		return plainText;
 	}
 	
+	/*
+	 *	Remove the zeros used for padding  
+	 */
 	private static byte[] deletePadding(byte[] input) {
 		int count = 0;
 
@@ -415,6 +419,9 @@ public class AES {
 		return r;
 	}
 	
+	/*
+	 *	Source: Section 5.1.2 FIPS 197 
+	 */
 	private static int shift(int a, int b) {
 		// Não faz sentido... mas é o que está no desenho do FIPS 197
 		return a;

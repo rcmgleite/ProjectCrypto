@@ -3,12 +3,9 @@ package src.gui;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Rectangle;
-import java.math.BigInteger;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -20,6 +17,7 @@ import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 
 import src.algorithms.HMAC;
+import src.algorithms.Utils;
 
 public class FrameHMAC extends JFrame {
 	
@@ -90,7 +88,7 @@ public class FrameHMAC extends JFrame {
 		System.out.println("[INFO] Secret Key: " + ta_key.getText());
 		
 		try {
-			ta_mac.setText(HMAC.compute(cbox_mode.getSelectedItem().toString(), ta_message.getText(), ta_key.getText()));
+			ta_mac.setText(Utils.BinaryToHex(HMAC.compute(cbox_mode.getSelectedItem().toString(), ta_message.getText(), ta_key.getText())));
 		} catch(NoSuchAlgorithmException aException) {
 			System.out.println("[ERROR] " + aException.getMessage());
 			ta_mac.setText("[ERROR] " + aException.getMessage());

@@ -82,40 +82,33 @@ public class RSA {
 	/*
 	 *	 Encrypt a plain text using RSA algorithm
 	 */
-	public String encrypt(String plainText) {
+	public byte[] encrypt(String plainText) throws Exception{
 		return cipherExecute(plainText, Mode.ENCRYPT);
 	}
 	
 	/*
 	 *	Decrypt a encrypted text using RSA algorithm
 	 */
-	public String decrypt(String cipherText) {
+	public byte[] decrypt(String cipherText) throws Exception{
 		return cipherExecute(cipherText, Mode.DECRYPT);
 	}
 	
 	/*
 	 *	Method that really executes the encrypt or decrypt operation based on the mode argument 
+	 *		Will return null if exception occur
 	 */
-	private String cipherExecute(String text, Mode mode) {
-		try{
-			Cipher cipher = Cipher.getInstance("RSA");
-			byte[] ciphered;
-			String toReturn;
-			
-			if(mode == Mode.ENCRYPT) {
-				cipher.init(Cipher.ENCRYPT_MODE, this.uk);
-				ciphered = cipher.doFinal(text.getBytes());
-				toReturn = Utils.binToBase64(ciphered);
-			} else {
-				cipher.init(Cipher.DECRYPT_MODE, this.rk);
-				ciphered = cipher.doFinal(Utils.base64ToBin(text));
-				toReturn = "Decoded cipher: '" + Utils.binToString(ciphered) + "'";
-			}
-			
-			return toReturn;
-		} catch(Exception e) {
-			System.out.println(e.getMessage());
-			return "[ERROR] " + e.getMessage();
-		} 
+	private byte[] cipherExecute(String text, Mode mode) throws Exception {
+		Cipher cipher = Cipher.getInstance("RSA");
+		byte[] ciphered;
+		
+		if(mode == Mode.ENCRYPT) {
+			cipher.init(Cipher.ENCRYPT_MODE, this.uk);
+			ciphered = cipher.doFinal(text.getBytes());
+		} else {
+			cipher.init(Cipher.DECRYPT_MODE, this.rk);
+			ciphered = cipher.doFinal(Utils.hexToBinary(text));
+		}
+		
+		return ciphered;
 	}
 }

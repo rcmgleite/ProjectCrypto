@@ -74,8 +74,8 @@ public class FrameRSA extends JFrame {
 	private void rsa_generatePairKey() {
 		RSA rsa = RSA.getInstance();
 		rsa.generateKeyPair();
-		ta_privatekey.setText(Utils.binToBase64(rsa.getPrivateKey().getEncoded()));
-		ta_publickey.setText(Utils.binToBase64(rsa.getPublicKey().getEncoded()));
+		ta_privatekey.setText(Utils.BinaryToHex(rsa.getPrivateKey().getEncoded()));
+		ta_publickey.setText(Utils.BinaryToHex(rsa.getPublicKey().getEncoded()));
 	}
 	
 	private void rsa_encrypt() {
@@ -83,7 +83,11 @@ public class FrameRSA extends JFrame {
 		if(rsa.getPublicKey() == null) {
 			ta_cyphertext.setText("Generate keys first!");
 		} else {
-			ta_cyphertext.setText(rsa.encrypt(ta_plantext.getText()));
+			try {
+				ta_cyphertext.setText(Utils.BinaryToHex(rsa.encrypt(ta_plantext.getText())));
+			} catch(Exception e) {
+				ta_cyphertext.setText(e.getMessage());
+			}
 		}
 	}
 
@@ -93,7 +97,11 @@ public class FrameRSA extends JFrame {
 		if(rsa.getPrivateKey() == null) {
 			ta_cyphertext.setText("Generate keys first!");
 		} else {
-			ta_plantext.setText(rsa.decrypt(ta_cyphertext.getText()));
+			try {
+				ta_plantext.setText("Decrypted text: " + Utils.binToString(rsa.decrypt(ta_cyphertext.getText())));
+			} catch(Exception e) {
+				ta_plantext.setText(e.getMessage());
+			}
 		}
 	}
 

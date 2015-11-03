@@ -116,14 +116,14 @@ public class FrameAES extends JFrame {
 			return;
 		}
 		byte[] encrypted = AES.encrypt(ta_plantext.getText().getBytes(), Utils.hexToBinary(ta_key.getText()), mode);
-		ta_cyphertext.setText(Utils.binToBase64(encrypted));
+		ta_cyphertext.setText(Utils.BinaryToHex(encrypted));
 	}
 
 	/*
 	 *	Default mode: ECB 
 	 */
 	private void aes_decrypt() {
-		byte[] decrypted = AES.decrypt(Utils.base64ToBin(ta_cyphertext.getText()), Utils.hexToBinary(ta_key.getText()));
+		byte[] decrypted = AES.decrypt(Utils.hexToBinary(ta_cyphertext.getText()), Utils.hexToBinary(ta_key.getText()));
 		try {
 			ta_plantext.setText("Decrypted data: " + Utils.binToString(decrypted));
 		} catch (Exception e) {
