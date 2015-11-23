@@ -1,5 +1,6 @@
 package src.algorithms;
 
+import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
@@ -113,10 +114,34 @@ public class AES {
 			}
 			break;
 		case CTR:
+			byte[] counter = iv;
+			
+			for(int i = 0; i < input.length + padding.length; i = i + 16) {
+				if(input.length - i >= 16) {
+					System.arraycopy(input, i, block, 0, block.length);
+				} else {
+					System.arraycopy(input, i, block, 0, (input.length - i) % 16);
+					System.arraycopy(padding, 0, block, (input.length - i) % 16, padding.length);
+				}
+
+				block = xor(block, encryptBlock(counter));
+				counter = incrCounter(counter);
+				System.arraycopy(block, 0, cipheredText, i, block.length);
+			}
 			break;
 		}
 		
 		return cipheredText;
+	}
+	
+	/*
+	 *	Increment the given input by 1 
+	 */
+	private static byte[] incrCounter(byte[] in) {
+		BigInteger bIntValue = new BigInteger(in);
+		bIntValue = bIntValue.add(BigInteger.ONE);
+		in = bIntValue.toByteArray();
+		return in;
 	}
 
 	/*
@@ -175,6 +200,13 @@ public class AES {
 			}
 			break;
 		case CTR:
+			byte[] counter = iv;
+			for(int i = 0; i < input.length; i = i + 16) {
+				System.arraycopy(input, i, block, 0, block.length);
+				block = xor(block, encryptBlock(counter));
+				counter = incrCounter(counter);
+				System.arraycopy(block, 0, plainText, i, block.length);
+			}
 			break;
 		}
 
