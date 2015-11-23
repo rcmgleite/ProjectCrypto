@@ -58,15 +58,8 @@ public class AES {
 			return null;
 		}
 	}
-
-	/*
-	 * encrypt method - currently using ONLY ECB mode by default
-	 */
-	public static byte[] encrypt(byte[] input, byte[] key, Mode mode) {
-		nk = key.length / 4;
-		nr = nk + 6;
-
-		// padding
+	
+	private static byte[] generatePadding(byte[] input) {
 		int paddingLength = 16 - (input.length % 16);
 		byte[] padding = new byte[paddingLength];
 		padding[0] = (byte) 0x80;
@@ -74,42 +67,59 @@ public class AES {
 		for (int i = 0; i < paddingLength; i++) {
 			padding[i] = 0;
 		}
+		return padding;
+	}
 
-		// Key expansion step
+	/*
+	 * encrypt method - currently using ONLY ECB mode by default
+	 */
+	public static byte[] encrypt(byte[] input, byte[] key, Mode mode) {
+		nk = key.length / 4;
+		nr = nk + 6;
 		w = keyExpansion(key);
-		int count = 0;
-		int i;
-		byte[] cipheredText = new byte[input.length + paddingLength];
-		byte[] block = new byte[16];
-		for (i = 0; i < input.length + paddingLength; i++) {
-			if (i > 0 && i % 16 == 0) {
-				block = encryptBlock(block);
-				System.arraycopy(block, 0, cipheredText, i - 16, block.length);
+		
+		byte[] padding = generatePadding(input);
+		byte[] cipheredText = new byte[input.length + padding.length];
+			
+		switch (mode) {
+		case ECB:
+			// AES block size = 128 bits === 16 bytes
+			byte[] block = new byte[16];
+			
+			for(int i = 0; i < input.length + padding.length; i = i + 16) {
+				if(input.length - i >= 16) {
+					
+					System.arraycopy(input, i, block, 0, block.length);
+					block = encryptBlock(block);
+					System.arraycopy(block, 0, cipheredText, i, block.length);
+				} else {
+					
+					System.arraycopy(input, i, block, 0, (input.length - i) % 16);
+					System.arraycopy(padding, 0, block, (input.length - i) % 16, padding.length);
+					block = encryptBlock(block);
+					System.arraycopy(block, 0, cipheredText, i, block.length);
+				}
 			}
-			if (i < input.length)
-				block[i % 16] = input[i];
-			else {
-				block[i % 16] = padding[count % 16];
-				count++;
-			}
+			break;
+		case CBC:
+			System.out.println("[INFO] CBC not implemented yet");
+			break;
+		case CTR:
+			System.out.println("[INFO] CTR not implemented yet");
+			break;
 		}
-		if (block.length == 16) {
-			block = encryptBlock(block);
-			System.arraycopy(block, 0, cipheredText, i - 16, block.length);
-		}
-
+		
 		return cipheredText;
 	}
 
 	/*
 	 * Source: figure 5 FIPS 197 The byte[]w contains the key schedule
+	 * 	Will encypt the block passed as argument 
 	 */
 	private static byte[] encryptBlock(byte[] block) {
 		byte[][] state = new byte[4][nb];
 
-		// copy in to state
 		state = unidimensional2bidimensional(block);
-
 		state = addRoundKey(state, w, 0);
 
 		// first rounds include mixColumns() step
@@ -126,37 +136,35 @@ public class AES {
 		state = addRoundKey(state, w, nr);
 
 		// copy state to toReturn
-		byte[] toReturn = bidimensional2unidimensional(state);
-
-		return toReturn;
+		return bidimensional2unidimensional(state);
 	}
 
 	/*
 	 * decrypt
 	 */
-	public static byte[] decrypt(byte[] input, byte[] key) {
-		byte[] plainText = new byte[input.length];
-		byte[] block = new byte[16];
-
+	public static byte[] decrypt(byte[] input, byte[] key, Mode mode) {
 		nk = key.length / 4;
 		nr = nk + 6;
 		w = keyExpansion(key);
-
-		int i;
-		for (i = 0; i < input.length; i++) {
-			if (i > 0 && i % 16 == 0) {
+		
+		// AES block size = 128 bits === 16 bytes
+		byte[] block = new byte[16];
+		byte[] plainText = new byte[input.length];
+		switch (mode) {
+		case ECB:
+			for(int i = 0; i < input.length; i = i + 16) {
+				System.arraycopy(input, i, block, 0, block.length);
 				block = decryptBlock(block);
-				System.arraycopy(block, 0, plainText, i - 16, block.length);
+				System.arraycopy(block, 0, plainText, i, block.length);
 			}
-			if (i < input.length)
-				block[i % 16] = input[i];
+			break;
+		case CBC:
+			break;
+		case CTR:
+			break;
 		}
-		block = decryptBlock(block);
-		System.arraycopy(block, 0, plainText, i - 16, block.length);
 
-		plainText = deletePadding(plainText);
-
-		return plainText;
+		return deletePadding(plainText);
 	}
 
 	/*
@@ -180,8 +188,6 @@ public class AES {
 	 * Source: Figure 12 - FIPS 197
 	 */
 	private static byte[] decryptBlock(byte[] input) {
-		byte[] plainBlock = new byte[input.length];
-
 		byte[][] state = new byte[4][nb];
 
 		state = unidimensional2bidimensional(input);
@@ -198,8 +204,7 @@ public class AES {
 		state = invShiftRows(state);
 		state = addRoundKey(state, w, 0);
 
-		plainBlock = bidimensional2unidimensional(state);
-		return plainBlock;
+		return bidimensional2unidimensional(state);
 	}
 
 	/*
