@@ -73,39 +73,46 @@ public class AES {
 	/*
 	 * encrypt method - currently using ONLY ECB mode by default
 	 */
-	public static byte[] encrypt(byte[] input, byte[] key, Mode mode) {
+	public static byte[] encrypt(byte[] input, byte[] key, byte[] iv, Mode mode) {
 		nk = key.length / 4;
 		nr = nk + 6;
 		w = keyExpansion(key);
 		
 		byte[] padding = generatePadding(input);
 		byte[] cipheredText = new byte[input.length + padding.length];
-			
+		// AES block size = 128 bits === 16 bytes
+		byte[] block = new byte[16];
+
 		switch (mode) {
 		case ECB:
-			// AES block size = 128 bits === 16 bytes
-			byte[] block = new byte[16];
-			
 			for(int i = 0; i < input.length + padding.length; i = i + 16) {
 				if(input.length - i >= 16) {
-					
 					System.arraycopy(input, i, block, 0, block.length);
-					block = encryptBlock(block);
-					System.arraycopy(block, 0, cipheredText, i, block.length);
 				} else {
-					
 					System.arraycopy(input, i, block, 0, (input.length - i) % 16);
 					System.arraycopy(padding, 0, block, (input.length - i) % 16, padding.length);
-					block = encryptBlock(block);
-					System.arraycopy(block, 0, cipheredText, i, block.length);
 				}
+
+				block = encryptBlock(block);
+				System.arraycopy(block, 0, cipheredText, i, block.length);
 			}
 			break;
 		case CBC:
-			System.out.println("[INFO] CBC not implemented yet");
+			byte[] lastCipheredBlock = iv;
+			for(int i = 0; i < input.length + padding.length; i = i + 16) {
+				if(input.length - i >= 16) {
+					System.arraycopy(input, i, block, 0, block.length);
+				} else {
+					System.arraycopy(input, i, block, 0, (input.length - i) % 16);
+					System.arraycopy(padding, 0, block, (input.length - i) % 16, padding.length);
+				}
+
+				block = encryptBlock(xor(lastCipheredBlock, block));
+				lastCipheredBlock = block;
+				System.arraycopy(block, 0, cipheredText, i, block.length);
+			}
 			break;
 		case CTR:
-			System.out.println("[INFO] CTR not implemented yet");
 			break;
 		}
 		
@@ -142,7 +149,7 @@ public class AES {
 	/*
 	 * decrypt
 	 */
-	public static byte[] decrypt(byte[] input, byte[] key, Mode mode) {
+	public static byte[] decrypt(byte[] input, byte[] key, byte[] iv, Mode mode) {
 		nk = key.length / 4;
 		nr = nk + 6;
 		w = keyExpansion(key);
@@ -159,6 +166,13 @@ public class AES {
 			}
 			break;
 		case CBC:
+			byte[] lastCipheredBlock = iv;
+			for(int i = 0; i < input.length; i = i + 16) {
+				System.arraycopy(input, i, block, 0, block.length);
+				block = xor(lastCipheredBlock, decryptBlock(block));
+				lastCipheredBlock = block;
+				System.arraycopy(block, 0, plainText, i, block.length);
+			}
 			break;
 		case CTR:
 			break;

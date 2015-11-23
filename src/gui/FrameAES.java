@@ -94,9 +94,6 @@ public class FrameAES extends JFrame {
 		ta_key.setText(Utils.BinaryToHex(key));
 	}
 
-	/*
-	 * 	Default mode: ECB
-	 */
 	private void aes_encrypt() {
 		AES.Mode mode;
 		switch(cbox_mode.getSelectedIndex()) {
@@ -115,13 +112,12 @@ public class FrameAES extends JFrame {
 			ta_plantext.setText("[ERROR] Cipher mode doesn't exist");
 			return;
 		}
-		byte[] encrypted = AES.encrypt(Utils.hexToBinary(ta_plantext.getText()), Utils.hexToBinary(ta_key.getText()), mode);
+
+		byte[] encrypted = AES.encrypt(Utils.hexToBinary(ta_plantext.getText()), Utils.hexToBinary(ta_key.getText()), 
+				Utils.hexToBinary(ta_iv.getText()), mode);
 		ta_cyphertext.setText(Utils.BinaryToHex(encrypted));
 	}
 
-	/*
-	 *	Default mode: ECB 
-	 */
 	private void aes_decrypt() {
 		AES.Mode mode;
 		switch(cbox_mode.getSelectedIndex()) {
@@ -140,7 +136,8 @@ public class FrameAES extends JFrame {
 			ta_plantext.setText("[ERROR] Cipher mode doesn't exist");
 			return;
 		}
-		byte[] decrypted = AES.decrypt(Utils.hexToBinary(ta_cyphertext.getText()), Utils.hexToBinary(ta_key.getText()), mode);
+		byte[] decrypted = AES.decrypt(Utils.hexToBinary(ta_cyphertext.getText()), Utils.hexToBinary(ta_key.getText()), 
+				Utils.hexToBinary(ta_iv.getText()), mode);
 		ta_plantext.setText("Decrypted data: " + Utils.BinaryToHex(decrypted));
 	}
 
