@@ -152,25 +152,42 @@ public class AES {
 		byte[][] state = new byte[4][nb];
 
 		state = unidimensional2bidimensional(block);
+		printState(state);
+		
 		state = addRoundKey(state, w, 0);
+		printState(state);
 
 		// first rounds include mixColumns() step
 		for (int r = 1; r < nr; r++) {
+			System.out.println("[DEBUG] round = " + r);
 			state = subBytes(state);
+			printState(state);
 			state = shiftRows(state);
+			printState(state);
 			state = mixCloumns(state);
+			printState(state);
 			state = addRoundKey(state, w, r);
+			printState(state);
 		}
 
 		// final round doesn't include mixColumns() step
 		state = subBytes(state);
+		printState(state);
 		state = shiftRows(state);
+		printState(state);
 		state = addRoundKey(state, w, nr);
+		printState(state);
 
 		// copy state to toReturn
 		return bidimensional2unidimensional(state);
 	}
 
+	private static void printState(byte[][] state) {
+		for(int i = 0; i < state.length; i++) {
+			System.out.println(Utils.BinaryToHex(state[i]));
+		}
+	}
+	
 	/*
 	 * decrypt
 	 */
@@ -359,7 +376,7 @@ public class AES {
 		byte[][] toReturn = new byte[4][nb];
 		for (int c = 0; c < 4; c++) {
 			for (int i = 0; i < nb; i++) {
-				toReturn[c][i] = (byte) (state[c][i] ^ sw[round * nb + c][i]);
+				toReturn[i][c] = (byte) (state[i][c] ^ sw[round * nb + c][i]);
 			}
 		}
 
